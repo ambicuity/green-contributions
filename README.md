@@ -1,8 +1,6 @@
-# 🟩 Green Contributions Automator
+# 🟩 Green Contributions Automator (Weather Edition)
 
-This repository hosts a simple automation script designed to maintain a consistent daily contribution streak on GitHub. More than just 
-keeping the contribution graph green, this project incorporates a "fun" element by dynamically fetching and committing interesting 
-programming quotes or insights daily.
+This repository hosts a simple automation script designed to maintain a consistent daily contribution streak on GitHub. More than just keeping the contribution graph green, this project incorporates a "fun" element by dynamically fetching and committing **daily weather reports**.
 
 ## 🌟 Purpose
 
@@ -10,77 +8,70 @@ The primary goals of this project are:
 * To demonstrate and practice setting up `cron` jobs on a Linux server.
 * To automate Git commit and push operations.
 * To playfully "green up" the GitHub contribution graph.
-* To build a cumulative log of interesting programming quotes and insights over time.
+* To build a cumulative log of **daily weather information** over time.
 
 ## ✨ How it Works
 
-The core of this project is a shell script (`daily_commit.sh`) that runs on a remote server via a `cron` job.
+The core of this project is a shell script (`run_weather_automation.sh`) that runs on a remote server via a `cron` job.
 
-1.  **Daily Execution**: A `cron` job is scheduled to run the `daily_commit.sh` script once every day at midnight (00:00 server time).
-2.  **Content Generation**: The script uses `curl` to fetch a random programming quote from a public API (e.g., 
-`programming-quotes-api.herokuapp.com`).
-3.  **File Update**: The fetched quote, along with a timestamp, is appended to `daily_insight.md`.
+1.  **Daily Execution**: A `cron` job is scheduled to run the `run_weather_automation.sh` script twice every day (at midnight and noon server time).
+2.  **Content Generation**: The script executes a Python script (`weather_report.py`) that uses a weather API (e.g., OpenWeatherMap) to fetch current weather conditions for a specified location (e.g., Boston, US).
+3.  **File Update**: The fetched weather data, along with a timestamp, is appended to `daily_weather_report.md`.
 4.  **Git Operations**:
-    * The `daily_insight.md` file is added to the Git staging area.
+    * The `daily_weather_report.md` file (and potentially `weather_script_log`) is added to the Git staging area.
     * A new commit is created with a descriptive message (including an emoji!).
     * The changes are pushed to this GitHub repository (`master` branch).
-5.  **Logging**: All output from the cron job (including script messages and errors) is redirected to `cron.log` for easy monitoring and 
-debugging.
+5.  **Logging**: All output from the cron job (including script messages and errors) is redirected to `cron_weather.log` for easy monitoring and debugging. A separate `weather_script_log` also tracks successful generation.
 
-## 🚀 Setup & Installation (for your own server)
+## 🚀 Setup & Installation (for your own Namecheap server)
 
-If you'd like to set up a similar automation, here's a high-level overview of the steps:
+If you'd like to set up a similar automation on a Namecheap shared hosting server, here's a high-level overview of the steps we followed:
 
-1.  **Clone this repository** (or create a new one) on your server:
+1.  **Clone this repository** on your server via SSH:
     ```bash
     git clone [https://github.com/ambicuity/green-contributions.git](https://github.com/ambicuity/green-contributions.git)
     cd green-contributions
     ```
-2.  **Configure Git Identity**:
+2.  **Configure Git Identity (Crucial for GitHub Contributions):**
+    Ensure the email used here is **added and VERIFIED** on your GitHub account, otherwise contributions won't show on your profile graph.
     ```bash
-    git config --global user.email "your_email@example.com"
+    git config --global user.email "your_github_verified_email@example.com"
     git config --global user.name "Your Name"
     ```
-3.  **Create a GitHub Personal Access Token (PAT)**:
-    * Go to GitHub `Settings > Developer settings > Personal access tokens > Tokens (classic)`.
-    * Generate a new token with `repo` scope. **Copy the token immediately!**
-4.  **Update Remote URL with PAT**:
-    ```bash
-    git remote remove origin
-    git remote add origin 
-[https://oauth2:YOUR_PERSONAL_ACCESS_TOKEN@github.com/YOUR_USERNAME/YOUR_REPO_NAME.git](https://oauth2:YOUR_PERSONAL_ACCESS_TOKEN@github.com/YOUR_USERNAME/YOUR_REPO_NAME.git)
-    ```
-    Replace `YOUR_PERSONAL_ACCESS_TOKEN`, `YOUR_USERNAME`, and `YOUR_REPO_NAME`.
-5.  **Create/Modify `daily_commit.sh`**: Ensure the `REPO_PATH` is correct for your server. This repository includes the script ready 
-for use.
-    ```bash
-    nano daily_commit.sh
-    # (Copy content from this project's daily_commit.sh)
-    ```
-6.  **Make script executable**:
-    ```bash
-    chmod +x daily_commit.sh
-    ```
-7.  **Set up the Cron Job**:
-    ```bash
-    crontab -e
-    ```
-    Add the following line (adjusting the path if necessary):
-    ```cron
-    0 0 * * * /home/YOUR_SERVER_USERNAME/green-contributions/daily_commit.sh >> /home/YOUR_SERVER_USERNAME/green-contributions/cron.log 
-2>&1
-    ```
-    Remember to replace `/home/YOUR_SERVER_USERNAME/green-contributions` with the actual path on your server.
-8.  **Perform Initial Push**:
-    ```bash
-    echo "# Daily Programming Insights" > daily_insight.md
-    git add daily_insight.md
-    git commit -m "Initial setup for daily programming insights log"
-    git push origin master
-    ```
+3.  **Set up Python Environment (via cPanel):**
+    * Log in to **cPanel**.
+    * Go to **"Setup Python App"**.
+    * Click "CREATE APPLICATION".
+    * Select your **Python version** (e.g., Python 3.9).
+    * Set **Application Root** to `/home/YOUR_CPANEL_USERNAME/green-contributions`.
+    * Click "CREATE".
+    * Once created, note the "Enter to virtual environment" command (e.g., `source /home/YOUR_CPANEL_USERNAME/virtualenv/green-contributions/3.6/bin/activate`). This is your virtual environment path.
+4.  **Install Python Dependencies:**
+    * SSH into your server.
+    * Navigate to your project: `cd /home/YOUR_CPANEL_USERNAME/green-contributions`
+    * Activate the Namecheap-provided virtual environment (using the path from step 3):
+        ```bash
+        source /home/YOUR_CPANEL_USERNAME/virtualenv/green-contributions/3.6/bin/activate
+        ```
+    * Install required libraries:
+        ```bash
+        pip install -r requirements.txt
+        ```
+5.  **Configure `weather_report.py`:**
+    * Open `weather_report.py` and replace placeholder API keys, `CITY`, and `COUNTRY_CODE` with your desired values.
+6.  **Update `run_weather_automation.sh`:**
+    * Open `run_weather_automation.sh` (e.g., `nano run_weather_automation.sh`).
+    * Ensure the `source` command at the beginning uses the **exact virtual environment path** noted in step 3.
+    * Make the script executable: `chmod +x run_weather_automation.sh`
+7.  **Set up the Cron Job (via cPanel):**
+    * Go to cPanel's **"Cron Jobs"** section.
+    * Set the schedule (e.g., "Twice Per Day" or `0 0,12 * * *`).
+    * For the **Command**, use:
+        ```bash
+        /bin/bash -c "cd /home/YOUR_CPANEL_USERNAME/green-contributions && source /home/YOUR_CPANEL_USERNAME/virtualenv/green-contributions/3.6/bin/activate && ./run_weather_automation.sh >> /home/YOUR_CPANEL_USERNAME/green-contributions/cron_weather.log 2>&1"
+        ```
+        Remember to replace `YOUR_CPANEL_USERNAME` with your actual cPanel username.
 
-## 📜 Daily Insights Log
+## 📜 Daily Weather Report Log
 
-Check `daily_insight.md` in this repository to see the accumulating collection of programming quotes and thoughts!
-
----
+Check `daily_weather_report.md` in this repository to see the accumulating collection of daily weather information!
